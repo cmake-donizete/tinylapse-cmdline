@@ -1,0 +1,10 @@
+{
+    "cmake.debugConfig": {
+        "args": [
+            "-f",
+            "2",
+            "-d",
+            "../frames"
+        ]
+    }
+}
