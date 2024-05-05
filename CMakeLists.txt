@@ -4,7 +4,7 @@ project(tinylapse-cmdline)
 
 add_executable(
     tinylapse-cmdline
-    main.c
+    main.cpp
 )
 
 target_link_libraries(
