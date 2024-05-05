@@ -4,5 +4,16 @@ project(tinylapse-cmdline)
 
 add_executable(
     tinylapse-cmdline
-    main.cpp
+    main.c
+)
+
+target_link_libraries(
+    tinylapse-cmdline
+    /opt/homebrew/lib/libswresample.dylib
+)
+
+target_include_directories(
+    tinylapse-cmdline
+    PUBLIC
+    /opt/homebrew/include/
 )
