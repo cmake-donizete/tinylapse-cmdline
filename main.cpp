@@ -7,6 +7,9 @@ extern "C"
 #include <string>
 #include <iostream>
 #include <vector>
+#include <stdexcept>
+#include <filesystem>
+#include <ranges>
 
 struct args
 {
@@ -39,6 +42,24 @@ static void parse_args(int argc, char **argv, struct args &args)
     }
 }
 
+static inline std::vector<std::string> find_frames(std::string &folder)
+{
+    std::vector<std::string> frames;
+
+    for (auto &data : std::filesystem::directory_iterator(folder))
+    {
+        if (!data.is_regular_file())
+            continue;
+        frames.push_back(data.path());
+    }
+
+    std::ranges::sort(
+        frames,
+        std::less());
+
+    return frames;
+}
+
 int main(int argc, char *argv[])
 {
     struct args args = {
@@ -47,6 +68,13 @@ int main(int argc, char *argv[])
     };
 
     parse_args(argc, argv, args);
+
+    if (args.directory.empty())
+    {
+        throw std::invalid_argument("Directory should not be empty");
+    }
+
+    auto frames = find_frames(args.directory);
 
     return EXIT_SUCCESS;
 }
