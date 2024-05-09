@@ -60,6 +60,15 @@ static inline std::vector<std::string> find_frames(std::string &folder)
     return frames;
 }
 
+struct less
+{
+    template <typename T>
+    auto operator()(T &&a, T &&b) const noexcept -> decltype(a < b)
+    {
+        return a < b;
+    }
+};
+
 int main(int argc, char *argv[])
 {
     struct args args = {

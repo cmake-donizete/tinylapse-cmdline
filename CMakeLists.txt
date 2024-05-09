@@ -9,6 +9,8 @@ if (APPLE)
     include_directories(/opt/homebrew/include)
 endif()
 
+add_subdirectory(hello_world)
+
 add_executable(
     tinylapse-cmdline
     main.cpp
