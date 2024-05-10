@@ -69,6 +69,8 @@
         "type_traits": "cpp",
         "utility": "cpp",
         "thread": "cpp",
-        "cinttypes": "cpp"
+        "cinttypes": "cpp",
+        "avcodec.h": "c",
+        "av1.h": "c"
     }
 }
