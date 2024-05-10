@@ -9,7 +9,7 @@ if (APPLE)
     include_directories(/opt/homebrew/include)
 endif()
 
-add_subdirectory(hello_world)
+add_subdirectory(examples)
 
 add_executable(
     tinylapse-cmdline
@@ -18,5 +18,6 @@ add_executable(
 
 target_link_libraries(
     tinylapse-cmdline
-    swresample
+    avcodec
+    avformat
 )
