@@ -6,9 +6,12 @@ pushd $ROOT
 
 ./configure                                 \
     --cc=clang                              \
-    --prefix=local                          \
-    --disable-programs --enable-shared      \
-    --enable-debug=3 --disable-optimizations
+    --arch=arm64                            \
+    --prefix=/tmp/local/                    \
+    --enable-shared                         \
+    --enable-debug=3                        \
+    --disable-programs                      \
+    --disable-optimizations                 \
 
 make -j64
 make install

@@ -1,23 +1,21 @@
 cmake_minimum_required(VERSION 3.29.2)
 
-project(tinylapse-cmdline)
+project(tinylapse-cmdline LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(INTERNAL_DEBUG FALSE)
 
-if (INTERNAL_DEBUG)
+if(INTERNAL_DEBUG)
     execute_process(COMMAND sh ../scripts/build_ffmpeg_debug.sh)
 
-    link_directories(external/FFmpeg/local/lib)
-    include_directories(external/FFmpeg/local/include)
+    link_directories(/tmp/local/lib)
+    include_directories(/tmp/local/include)
 else()
     if (APPLE)
         link_directories(/opt/homebrew/lib)
         include_directories(/opt/homebrew/include)
     endif()
 endif()
-
-add_subdirectory(examples)
 
 add_executable(
     tinylapse-cmdline
