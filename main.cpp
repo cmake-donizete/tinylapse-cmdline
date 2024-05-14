@@ -16,19 +16,22 @@ struct args
 {
     char framerate;
     std::string directory;
+    std::string output;
 };
 
 static struct option long_options[] = {
     {"framerate", required_argument, 0, 'f'},
     {"directory", required_argument, 0, 'd'},
+    {"output", required_argument, 0, 'o'},
 };
 
-static void parse_args(int argc, char **argv, struct args &args)
+static inline struct args parse_args(int argc, char **argv)
 {
+    struct args args;
     char c;
     int option_index;
 
-    while ((c = getopt_long(argc, argv, "f:d:", long_options, &option_index)) != -1)
+    while ((c = getopt_long(argc, argv, "f:d:o:", long_options, &option_index)) != -1)
     {
         switch (c)
         {
@@ -39,8 +42,19 @@ static void parse_args(int argc, char **argv, struct args &args)
         case 'd':
             args.directory = optarg;
             break;
+
+        case 'o':
+            args.output = optarg;
+            break;
         }
     }
+
+    if (args.directory.empty())
+    {
+        throw std::invalid_argument("Directory should not be empty");
+    }
+
+    return args;
 }
 
 static inline std::vector<std::string> find_frames(std::string &folder)
@@ -54,97 +68,41 @@ static inline std::vector<std::string> find_frames(std::string &folder)
         frames.push_back(data.path());
     }
 
-    std::ranges::sort(
-        frames,
-        std::less());
+    std::ranges::sort(frames, std::less());
 
     return frames;
 }
 
 int main(int argc, char *argv[])
 {
-    int ret;
-    struct args args = {
-        .framerate = 1,
-        .directory = "",
-    };
+    av_log_set_level(AV_LOG_VERBOSE);
+    int ret = 0;
+    struct args args = parse_args(argc, argv);
 
-    parse_args(argc, argv, args);
+    const AVOutputFormat *oformat = av_guess_format(
+        nullptr,
+        args.output.c_str(),
+        nullptr);
 
-    if (args.directory.empty())
-    {
-        throw std::invalid_argument("Directory should not be empty");
-    }
+    AVFormatContext *fcontext = avformat_alloc_context();
+    fcontext->oformat = oformat;
 
-    auto frames = find_frames(args.directory);
+    const AVCodec *video_codec = avcodec_find_encoder(oformat->video_codec);
 
-    std::string outputName = "output.mp4";
-    FILE *outputFile = fopen(outputName.c_str(), "wb");
+    AVCodecContext *video_codec_context = avcodec_alloc_context3(video_codec);
+    video_codec_context->bit_rate = 40000;
+    video_codec_context->width = 1280;
+    video_codec_context->height = 720;
+    video_codec_context->time_base = AVRational{.num = 1, .den = 1};
+    video_codec_context->gop_size = 12; // emit one intra frame every twelve frames at most
+    video_codec_context->pix_fmt = AV_PIX_FMT_YUV420P;
 
-    auto avCodec = avcodec_find_encoder(AVCodecID::AV_CODEC_ID_MPEG4);
-    auto avCodecContext = avcodec_alloc_context3(avCodec);
-    avCodecContext->gop_size = 10;
-    avCodecContext->max_b_frames = 1;
-    avCodecContext->bit_rate = 400000;
-    avCodecContext->width = 1280;
-    avCodecContext->height = 720;
-    avCodecContext->time_base = AVRational{.num = 1, .den = 25};
-    avCodecContext->framerate = AVRational{.num = 25, .den = 1};
-    avCodecContext->pix_fmt = AVPixelFormat::AV_PIX_FMT_YUV420P;
-    ret = avcodec_open2(avCodecContext, avCodec, nullptr);
+    AVStream *video_stream = avformat_new_stream(fcontext, nullptr);
+    ret = avcodec_parameters_from_context(video_stream->codecpar, video_codec_context);
 
-    auto avFrame = av_frame_alloc();
-    avFrame->format = avCodecContext->pix_fmt;
-    avFrame->width = avCodecContext->width;
-    avFrame->height = avCodecContext->height;
-    ret = av_frame_get_buffer(avFrame, 0);
-
-    auto avPacket = av_packet_alloc();
-
-    for (int i = 0; i < 25; i++)
-    {
-        ret = av_frame_make_writable(avFrame);
-
-        /* Prepare a dummy image.
-           In real code, this is where you would have your own logic for
-           filling the frame. FFmpeg does not care what you put in the
-           frame.
-         */
-        /* Y */
-        for (int y = 0; y < avCodecContext->height; y++)
-        {
-            for (int x = 0; x < avCodecContext->width; x++)
-            {
-                avFrame->data[0][y * avFrame->linesize[0] + x] = x + y + i * 3;
-            }
-        }
-
-        /* Cb and Cr */
-        for (int y = 0; y < avCodecContext->height / 2; y++)
-        {
-            for (int x = 0; x < avCodecContext->width / 2; x++)
-            {
-                avFrame->data[1][y * avFrame->linesize[1] + x] = 128 + y + i * 2;
-                avFrame->data[2][y * avFrame->linesize[2] + x] = 64 + x + i * 5;
-            }
-        }
-
-        avFrame->pts = i;
-
-        ret = avcodec_send_frame(avCodecContext, avFrame);
-        ret = avcodec_receive_packet(avCodecContext, avPacket);
-        if (ret < 0)
-        {
-            throw std::runtime_error("Something went wrong");
-        }
-        if (ret == AVERROR(EAGAIN) || AVERROR_EOF)
-            continue;
-        fwrite(avPacket->data, 1, avPacket->size, outputFile);
-    }
-
-    avcodec_free_context(&avCodecContext);
-    av_packet_free(&avPacket);
-    av_frame_free(&avFrame);
+    ret = avcodec_open2(video_codec_context, video_codec, nullptr);
+    ret = avio_open(&fcontext->pb, args.output.c_str(), AVIO_FLAG_WRITE);
+    ret = avformat_write_header(fcontext, nullptr);
 
     return EXIT_SUCCESS;
 }

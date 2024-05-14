@@ -4,7 +4,9 @@
             "-f",
             "2",
             "-d",
-            "../frames"
+            "../frames",
+            "-o",
+            "video.mp4"
         ]
     },
     "files.associations": {
@@ -71,6 +73,31 @@
         "thread": "cpp",
         "cinttypes": "cpp",
         "avcodec.h": "c",
-        "av1.h": "c"
+        "av1.h": "c",
+        "queue": "cpp",
+        "stack": "cpp",
+        "__hash_table": "cpp",
+        "__node_handle": "cpp",
+        "__tree": "cpp",
+        "cfenv": "cpp",
+        "charconv": "cpp",
+        "codecvt": "cpp",
+        "complex": "cpp",
+        "csignal": "cpp",
+        "deque": "cpp",
+        "fstream": "cpp",
+        "iomanip": "cpp",
+        "list": "cpp",
+        "map": "cpp",
+        "semaphore": "cpp",
+        "set": "cpp",
+        "shared_mutex": "cpp",
+        "source_location": "cpp",
+        "span": "cpp",
+        "sstream": "cpp",
+        "strstream": "cpp",
+        "typeindex": "cpp",
+        "valarray": "cpp",
+        "ranges": "cpp"
     }
 }
