@@ -1,9 +1,9 @@
-cmake_minimum_required(VERSION 3.29.2)
+cmake_minimum_required(VERSION 4.1.1)
 
-project(tinylapse-cmdline LANGUAGES CXX)
+project(tinylapse-cmdline LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
-set(INTERNAL_DEBUG FALSE)
+set(INTERNAL_DEBUG OFF)
 
 if(INTERNAL_DEBUG)
     execute_process(COMMAND sh ../scripts/build_ffmpeg_debug.sh)
@@ -17,14 +17,19 @@ else()
     endif()
 endif()
 
-add_executable(
-    tinylapse-cmdline
-    main.cpp
-)
+macro(ffmpeg_executable)
+    set(PATH ${ARGV0})
+    cmake_path(GET PATH STEM NAME)
+    add_executable(${NAME} ${PATH})
+    target_link_libraries(
+        ${NAME}
+        avcodec
+        avformat
+        avutil
+    )
+endmacro(ffmpeg_executable)
 
-target_link_libraries(
-    tinylapse-cmdline
-    avcodec
-    avformat
-    avutil
-)
+ffmpeg_executable(main.cpp)
+ffmpeg_executable(src/printinfos.cpp)
+
+ffmpeg_executable(external/FFmpeg/doc/examples/encode_video.c)
